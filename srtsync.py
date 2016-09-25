@@ -71,8 +71,8 @@ def sync(input_file, output_file, *timings):
 
 
 def main(argv):
-    usage = ('Usage: srtsync.py -i <inputfile> -o <outputfile -t <time_in_ms> \n'
-             '   or: srtsync.py -i <inputfile> -o <outputfile -c <current-time -e <expected-time>')
+    usage = ('Usage: srtsync.py -i <inputfile> -o <outputfile> -t <time_in_ms> \n'
+             '   or: srtsync.py -i <inputfile> -o <outputfile> -c <current-time> -e <expected-time>')
     options = 'hi:o:t:c:e:'
     long_options = [
         'input=', 
@@ -90,9 +90,11 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, options, long_options)
     except getopt.GetoptError:
+        print usage
         sys.exit(2)
 
     if len(opts) == 0:
+        print usage
         sys.exit(2)
 
     for opt, arg in opts:
@@ -114,6 +116,7 @@ def main(argv):
     timings_present = time_diff or (current_time and expected_time)
 
     if not(files_present) or not(timings_present):
+        print usage
         sys.exit(2)
 
     if current_time and expected_time:
