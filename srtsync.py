@@ -1,39 +1,38 @@
 #!/usr/bin/python
 
-# Sync SubRip (SRT) subtitle files
-#
-# Author: Gaetan Covelli <gaetan.covelli@gmail.com>
-# License: MIT
+""" Sync SubRip (SRT) subtitle files
 
+Author: Gaetan Covelli <gaetan.covelli@gmail.com>
+License: MIT
+
+"""
 
 import re
-import string
 import sys
 import getopt
 
 
 def _to_seconds(raw_time):
     """ Converts hh:mm:ss,ms time format to seconds. """
-    unit = string.split(raw_time, ':')
-    return (int(unit[0]) * 3600 
-            + int(unit[1]) * 60 + float(string.replace(unit[2], ',', '.')))
+    hours, mins, secs = raw_time.split(':')
+    return int(hours) * 3600 + int(mins) * 60 + float(secs.replace(',', '.'))
 
 
 def _to_hhmmss(seconds):
     """ Converts seconds to hh:mm:ss,ms time format """
-    total_seconds = float(seconds)
-    hours = int(total_seconds / 3600)
-    minutes = int((total_seconds - (hours * 3600)) / 60)
-    seconds = total_seconds - (hours * 3600) - (minutes * 60);
-    seconds = '{:.3f}'.format(seconds)
+    total_secs = float(seconds)
+    hours = int(total_secs / 3600)
+    mins = int((total_secs - (hours * 3600)) / 60)
+    secs = total_secs - (hours * 3600) - (mins * 60)
 
-    if hours < 10: hours = '0' + str(hours)
-    if minutes < 10: minutes = '0' + str(minutes)
-    if float(seconds) < 10: seconds = '0' + seconds
+    hours = '{:02d}'.format(hours)
+    mins = '{:02d}'.format(mins)
+    secs = '{:.3f}'.format(secs)
 
-    return (str(hours) 
-            + ':' + str(minutes) 
-            + ':' + string.replace(seconds, '.', ','))
+    if float(secs) < 10:
+        secs = '0{}'.format(secs)
+
+    return '{}:{}:{}'.format(hours, mins, secs.replace('.', ','))
 
 
 def _sync_section(match, time_diff):
@@ -62,8 +61,10 @@ def sync(input_file, output_file, *timings):
     regex = r'(\d{2}:\d{2}:\d{2},\d{3})'
 
     for curr_line in input_file:
-        new_line = re.sub(regex, lambda line : _sync_section(line, diff), 
-                          curr_line.rstrip('\n'))
+        new_line = re.sub(
+            regex,
+            lambda line: _sync_section(line, diff),
+            curr_line.rstrip('\n'))
         output_file.write(new_line)
 
     input_file.close()
@@ -71,14 +72,17 @@ def sync(input_file, output_file, *timings):
 
 
 def main(argv):
-    usage = ('Usage: srtsync.py -i <inputfile> -o <outputfile> -t <time_in_ms> \n'
-             '   or: srtsync.py -i <inputfile> -o <outputfile> -c <current-time> -e <expected-time>')
+    """ Sync the subtitles from the command line """
+    usage = ('Usage: srtsync.py -i <inputfile> -o <outputfile>'
+             ' -t <time_in_ms> \n'
+             'Or: srtsync.py -i <inputfile> -o <outputfile>'
+             ' -c <current-time> -e <expected-time>')
     options = 'hi:o:t:c:e:'
     long_options = [
-        'input=', 
-        'output=', 
-        'time-diff=', 
-        'current-time=', 
+        'input=',
+        'output=',
+        'time-diff=',
+        'current-time=',
         'expected-time='
     ]
     input_file = ''
@@ -88,7 +92,7 @@ def main(argv):
     expected_time = None
 
     try:
-        opts, args = getopt.getopt(argv, options, long_options)
+        opts, _ = getopt.getopt(argv, options, long_options)
     except getopt.GetoptError:
         print usage
         sys.exit(2)
@@ -112,10 +116,10 @@ def main(argv):
         elif opt in ('-e', '--expected-time'):
             expected_time = arg
 
-    files_present = len(input_file) > 0 and len(output_file) > 0
+    files_present = input_file and output_file
     timings_present = time_diff or (current_time and expected_time)
 
-    if not(files_present) or not(timings_present):
+    if not files_present or not timings_present:
         print usage
         sys.exit(2)
 
@@ -126,3 +130,4 @@ def main(argv):
 
 if __name__ == '__main__':
     main(sys.argv[1:])
+    
